@@ -10,23 +10,18 @@ from PySide2.QtGui import QGuiApplication
 from PySide2.QtQml import QQmlApplicationEngine
 
 
-class QMLParam(Property):
+CHANGED_SIGNAL = 'Changed'
+
+
+class Param(QObject):
     """
     Descriptor to manage an individual piece of data that needs to be shared
     between QML and python.
     """
-    valueChanged = Signal(int)
-
-    def __init__(self, type_):
-        # TODO: need to figure out how to make Coordinate have the correct signals already
-        #  by the time this gets called
-        # print(self.valueChanged)
-        Property().__init__(type_, fget=self.__get__, fset=self.__set__)#, notify=self.valueChanged)
+    DataClass = None
 
     def __set_name__(self, owner, name):
         self.private_name = '_' + name
-        self.signal_name = name + 'Changed'
-        setattr(owner, self.signal_name, type(self).valueChanged)
 
     def __get__(self, instance, owner=None):
         return getattr(instance, self.private_name)
@@ -35,19 +30,63 @@ class QMLParam(Property):
         """
         Set the value and emit the valueChanged signal.
         """
-        print(f'{self.private_name[1:]} being changed to {value}')
+        self.validate(value)
+        setattr(instance, self.private_name, value)
+        # signal = getattr(instance, self.param_name + CHANGED_SIGNAL)
+        # signal.emit(value)
+
+    def validate(self):
+        NotImplemented
+
+
+class IntParam(Param):
+
+    def validate(self, value):
         if not isinstance(value, int):
             raise TypeError(f'Expected type int, got {type(value)}')
-        setattr(instance, self.private_name, value)
-        signal = getattr(instance, self.signal_name)
-        print('descriptor signal', type(self).valueChanged, type(type(self).valueChanged))
-        print('coord signal', signal, type(signal))
-        signal.emit(value)
 
 
-class Coordinate(QObject):
-    x = QMLParam(int)
-    y = QMLParam(int)
+class CompoundParamMeta(type(QObject)):
+
+    @classmethod
+    def __prepare__(metacls, name, bases):
+        dct = super().__prepare__(name, bases)
+        dct['_sub_params'] = {}
+        return dct
+
+    def __new__(metacls, name, parents, dct, **kwargs):
+        new_cls = super().__new__(metacls, name, parents, dct, **kwargs)
+        return new_cls
+
+
+class CompoundParam(QObject, metaclass=CompoundParamMeta):
+    """
+    Container for multiple Param instances.
+    """
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        cls._populateClassParams()
+        cls._populateSignalsOnClass()
+
+    @classmethod
+    def _populateClassParams(cls):
+        for name, attr in list(cls.__dict__.items()):
+            if isinstance(attr, Param):
+                param = attr
+                cls._sub_params[name] = param
+
+    @classmethod
+    def _populateSignalsOnClass(cls):
+        for name in cls._sub_params:
+            signal_name = name + CHANGED_SIGNAL
+            signal = Signal(object)
+            setattr(cls, signal_name, signal)
+
+
+class Coordinate(CompoundParam):
+    x = IntParam()
+    y = IntParam()
 
     def __init__(self, x: int = 0, y: int = 0):
         super().__init__()
@@ -58,15 +97,19 @@ class Coordinate(QObject):
         self.x = 4
 
 
-if __name__ == "__main__":
-    app = QGuiApplication(sys.argv)
-    engine = QQmlApplicationEngine()
+c = Coordinate()
+# TODO: how do we make the property?
 
-    coord = Coordinate(5, 5)
-    engine.rootContext().setContextProperty('_coord1', coord)
-
-    engine.load(os.path.join(os.path.dirname(__file__), "main.qml"))
-
-    if not engine.rootObjects():
-        sys.exit(-1)
-    sys.exit(app.exec_())
+#
+# if __name__ == "__main__":
+#     app = QGuiApplication(sys.argv)
+#     engine = QQmlApplicationEngine()
+#
+#     coord = Coordinate(5, 5)
+#     engine.rootContext().setContextProperty('_coord1', coord)
+#
+#     engine.load(os.path.join(os.path.dirname(__file__), "main.qml"))
+#
+#     if not engine.rootObjects():
+#         sys.exit(-1)
+#     sys.exit(app.exec_())
