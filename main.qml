@@ -53,6 +53,20 @@ Window {
                 verticalAlignment: Text.AlignVCenter
                 anchors.horizontalCenter: parent.horizontalCenter
             }
+
+            TopButton {
+                id: closeButton
+                x: 370
+                width: 30
+                text: "X"
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.rightMargin: 0
+                anchors.bottomMargin: 0
+                anchors.topMargin: 0
+                onClicked: mainWindow.close()
+            }
         }
 
         Rectangle {
@@ -82,6 +96,7 @@ Window {
                     id: pointLbl
                     color: "#e1e1e1"
                     text: qsTr("Point")
+                    font.bold: true
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -94,6 +109,7 @@ Window {
                     id: xLbl
                     color: "#e1e1e1"
                     text: qsTr("X")
+                    font.bold: true
                     horizontalAlignment: Text.AlignLeft
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     font.pointSize: 15
@@ -103,6 +119,7 @@ Window {
                     id: yLbl
                     color: "#e1e1e1"
                     text: qsTr("Y")
+                    font.bold: true
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     font.pointSize: 15
                 }
@@ -115,7 +132,7 @@ Window {
                     font.pointSize: 15
                 }
 
-                MappedSpinBox {
+                SpinBox {
                     id: x1Sb
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     value: _coord1.x
@@ -125,7 +142,8 @@ Window {
                 SpinBox {
                     id: y1Sb1
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    onValueChanged: _coord1.x = x1Sb.value + 1
+                    value: _coord1.y
+                    onValueChanged: _coord1.y = value
                 }
 
                 Label {
@@ -139,11 +157,15 @@ Window {
                 SpinBox {
                     id: x2Sb
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    value: _coord2.x
+                    onValueChanged: _coord2.x = value
                 }
 
                 SpinBox {
                     id: y2Sb
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    value: _coord2.y
+                    onValueChanged: _coord2.y = value
                 }
 
                 Label {
@@ -155,21 +177,24 @@ Window {
                 }
 
                 Label {
-                    id: midpointXLbl
+                    id: xMidLbl
+                    property string modelValue
                     color: "#e1e1e1"
-                    text: qsTr("PLACEHOLDER")
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    modelValue: _midpoint.x
+                    text: modelValue.toString()
                     font.pointSize: 15
                 }
 
                 Label {
-                    id: midpointYLbl
+                    id: yMidLbl
+                    property string modelValue
                     color: "#e1e1e1"
-                    text: qsTr("PLACEHOLDER")
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    modelValue: _midpoint.y
+                    text: modelValue.toString()
                     font.pointSize: 15
                 }
-
 
             }
         }
